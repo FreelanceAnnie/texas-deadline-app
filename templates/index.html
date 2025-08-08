@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Texas Family Law Deadline Calculator | Freelance Annie</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            color: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #e63946;
+        }
+        img {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2em;
+            color: #e63946;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="date"] {
+            padding: 10px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #cccccc;
+            margin-bottom: 15px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #cccccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #e63946;
+            color: white;
+        }
+        button, .action-button {
+            background: #e63946;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        button:hover, .action-button:hover {
+            background: #d62839;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #888888;
+
+        tr.target-deadline-row {
+  border: 2px solid red;
+}
+        }
+         tr.target-deadline-row {
+    border: 2px solid red;
+  }
+
+  tr.target-deadline-row td em {
+    font-style: italic;
+    color: #b30000;
+  }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Freelance Annie Logo" width="150" style="margin-bottom: 20px;">
+        <h1>Texas Family Law Deadline Calculator</h1>
+     <form id="inputForm">
+  <label>Client Name:</label>
+  <input type="text" id="client_name">
+
+  <label>Trial Date:</label>
+  <input type="date" id="trial_date">
+
+  <button type="button" onclick="calculateDeadlines()">Generate Trial Date Deadlines</button>
+  <button onclick="location.reload()">Clear All</button>
+</form>
+
+<!-- TRIAL DEADLINES SECTION -->
+<div id="trialSection" style="display: none;">
+  <form id="outputForm" method="post" action="/generate">
+    <input type="hidden" id="hidden_client_name">
+    <input type="hidden" id="hidden_trial_date">
+
+    <table id="deadlineTable">
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Deadline (Editable)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button type="button" onclick="downloadWordDoc()">Word Doc</button>
+    <button type="button" onclick="downloadCSV()">Download CSV</button>
+    <button type="button" onclick="downloadICS()">Download .ics</button>
+  </form>
+</div>
+        <form id="csvForm" method="post" action="/download_csv" style="display:none;">
+            <input type="hidden" name="client_name" id="csv_client_name">
+        </form>
+        <div style="margin-top: 30px;">
+<!-- Discovery DEADLINE SECTION -->
+<h2>Discovery Deadline</h2>
+
+<label for="discoveryDate">Date Discovery Received:</label>
+<input type="date" id="discoveryDate" name="discoveryDate">
+
+<button type="button" onclick="generateDiscoveryDeadline()">Generate Discovery Deadline</button>
+<button onclick="location.reload()">Clear All</button>
+
+<div id="discoveryResults" style="display: none;">
+  <table id="discoveryTable">
+    <thead>
+      <tr>
+        <th>Discovery Event</th>
+        <th>Deadline</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+</div>
+        <div class="footer">
+            © 2025 Freelance Annie Paralegal Services | All Rights Reserved
+        </div>
+    </div>
+
+    <script>
+function calculateDeadlines() {
+  const trial_date = document.getElementById('trial_date').value;
+  const client_name = document.getElementById('client_name').value;
+
+  if (!trial_date || !client_name) {
+    alert('Please enter the trial date and client name.');
+    return;
+  }
+
+  document.getElementById('hidden_client_name').value = client_name;
+  document.getElementById('hidden_trial_date').value = trial_date;
+  document.getElementById('csv_client_name').value = client_name;
+
+  fetch('/calculate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'trial_date=' + encodeURIComponent(trial_date)
+  })
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.querySelector('#deadlineTable tbody');
+      tbody.innerHTML = '';
+
+      const csvForm = document.getElementById('csvForm');
+      csvForm.innerHTML = `<input type="hidden" name="client_name" value="${client_name}">`;
+
+      data.forEach(item => {
+        const row = document.createElement('tr');
+        const eventCell = document.createElement('td');
+        const dateCell = document.createElement('td');
+
+        eventCell.textContent = item.event;
+
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.name = 'date';
+        dateInput.value = item.date;
+
+        const eventInput = document.createElement('input');
+        eventInput.type = 'hidden';
+        eventInput.name = 'event';
+        eventInput.value = item.event;
+
+        dateCell.appendChild(dateInput);
+        dateCell.appendChild(eventInput);
+
+        row.appendChild(eventCell);
+        row.appendChild(dateCell);
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('trialSection').style.display = 'block';
+    });
+}
+
+// ... existing trial functions above this
+
+function generateDiscoveryDeadline() {
+  const discoveryDateInput = document.getElementById("discoveryDate");
+  const discoveryDate = new Date(discoveryDateInput.value);
+  if (isNaN(discoveryDate)) {
+    alert("Please enter a valid discovery received date.");
+    return;
+  }
+
+  const deadline = new Date(discoveryDate);
+  deadline.setDate(deadline.getDate() + 30);
+
+  const tbody = document.querySelector("#discoveryTable tbody");
+  tbody.innerHTML = "";
+
+  const row = document.createElement("tr");
+  row.classList.add("target-deadline-row");
+
+  const eventCell = document.createElement("td");
+  eventCell.innerHTML = `<em>🛈 Discovery Response Due</em>`;
+
+  const dateCell = document.createElement("td");
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.name = "date";
+  dateInput.value = deadline.toISOString().split("T")[0];
+
+  const hiddenEvent = document.createElement("input");
+  hiddenEvent.type = "hidden";
+  hiddenEvent.name = "event";
+  hiddenEvent.value = "Discovery Response Due";
+
+  dateCell.appendChild(dateInput);
+  dateCell.appendChild(hiddenEvent);
+
+  row.appendChild(eventCell);
+  row.appendChild(dateCell);
+  tbody.appendChild(row);
+
+  document.getElementById("discoveryResults").style.display = "block";
+}
+function downloadWordDoc() {
+  const table = document.querySelector("table");
+  if (!table) return alert("No table found!");
+
+  const clientName = document.getElementById("client_name")?.value?.trim() || "Unnamed Client";
+  let html = `
+    <html>
+    <head><meta charset='utf-8'></head>
+    <body style="font-family: Arial, sans-serif;">
+
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="margin: 5px 0;">Freelance Annie</h1>
+        <h3 style="margin: 0; font-weight: normal;">Paralegal Services</h3>
+        <p style="margin: 0; font-size: 12px;">www.freelanceannie.com</p>
+      </div>
+
+      <h2 style="text-align: center;">Legal Deadlines Summary</h2>
+      <h3 style="text-align: center;">Client: ${clientName}</h3>
+
+      <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead style="background-color: #c01e2f; color: white;">
+          <tr><th>Event</th><th>Deadline</th></tr>
+        </thead>
+        <tbody>
+  `;
+
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach(row => {
+    const event = row.cells[0].textContent.trim();
+    const dateInput = row.cells[1].querySelector("input");
+    const date = dateInput ? dateInput.value : row.cells[1].textContent.trim();
+    html += `<tr><td>${event}</td><td>${date}</td></tr>`;
+  });
+
+  html += `
+        </tbody>
+      </table>
+
+      <p style="margin-top: 40px; font-size: 12px; text-align: center;">
+        Generated by Freelance Annie's Legal Deadline Tool. Please confirm all deadlines with court rules or your supervising attorney.
+      </p>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Legal-Deadlines.doc";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+// ✅ This is now global and will work
+function clearDiscovery() {
+  console.log("Clearing discovery input and table...");
+
+  document.getElementById('discoveryDate').value = '';
+
+  const discoveryTableBody = document.querySelector('#discoveryTable tbody');
+  if (discoveryTableBody) discoveryTableBody.innerHTML = '';
+
+  const discoveryResults = document.getElementById('discoveryResults');
+  if (discoveryResults) discoveryResults.style.display = 'none';
+}
+</script>
+<script>
+function downloadICS() {
+  const form = document.getElementById('outputForm');
+  const originalAction = form.action;
+
+  form.action = '/download_ics';
+  form.method = 'POST';
+  form.submit();
+
+  // Optional: restore the original action (usually /generate)
+  form.action = originalAction || '/generate';
+}
+</script>
+
+</script>
+<script>
+  // ALL JavaScript functions, including clearAll()
+function clearAll() {
+  console.log("Clearing all inputs and hiding tables...");
+
+  // Reset inputs
+  document.getElementById('client_name').value = '';
+  document.getElementById('trial_date').value = '';
+  document.getElementById('trialSection').style.display = 'none';
+  document.getElementById('discoveryDate').value = '';
+
+  // Reset hidden fields
+  document.getElementById('hidden_client_name').value = '';
+  document.getElementById('hidden_trial_date').value = '';
+  document.getElementById('trialSection').style.display = 'none';
+  document.getElementById('csv_client_name').value = '';
+;
+  // Clear and hide trial deadline table
+  const deadlineTableBody = document.querySelector('#deadlineTable tbody');
+  if (deadlineTableBody) {
+    deadlineTableBody.innerHTML = '';
+  }
+
+  const trialSection = document.getElementById('trialSection');
+  if (trialSection) {
+    trialSection.style.display = 'none';
+    console.log("Trial section hidden");
+  }
+
+ // Clear discovery deadlines
+function clearDiscovery() {
+  console.log("Clearing discovery input and table...");
+
+  // Clear input
+  document.getElementById('discoveryDate').value = '';
+
+  // Clear table body
+  const discoveryTableBody = document.querySelector('#discoveryTable tbody');
+  if (discoveryTableBody) discoveryTableBody.innerHTML = '';
+document.getElementById('discoveryResults').style.display = 'none';
+  // Hide discovery section
+  const discoverySection = document.getElementById('discoverySection');
+  if (discoverySection) discoverySection.style.display = 'none';
+}
+  // Hide CSV form
+  const csvForm = document.getElementById('csvForm');
+  if (csvForm) csvForm.style.display = 'none';
+}
+  // Make sure the output/download sections are visible too
+  document.getElementById('outputForm').style.display = 'block';
+  document.getElementById('csvForm').style.display = 'block';
+
+
+function downloadCSV() {
+  const csvForm = document.getElementById('csvForm');
+  const clientName = document.getElementById('client_name').value.trim();
+
+  csvForm.innerHTML = `<input type="hidden" name="client_name" value="${clientName}">`;
+
+  const rows = document.querySelectorAll('#deadlineTable tbody tr');
+  rows.forEach(row => {
+    const event = row.querySelector('input[name="event"]').value;
+    const date = row.querySelector('input[name="date"]').value;
+
+    const eventInput = document.createElement('input');
+    eventInput.type = 'hidden';
+    eventInput.name = 'event';
+    eventInput.value = `${clientName} – ${event}`;
+
+    const dateInput = document.createElement('input');
+    dateInput.type = 'hidden';
+    dateInput.name = 'date';
+    dateInput.value = date;
+
+    csvForm.appendChild(eventInput);
+    csvForm.appendChild(dateInput);
+    
+  
+
+  csvForm.submit();
+  
+  
+  });
+}
+</script>
+
+
+</body>
+</html>
