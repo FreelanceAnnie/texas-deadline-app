@@ -428,6 +428,74 @@ function downloadCSV() {
   });
 }
 </script>
+<script>
+  // Check localStorage for prior use
+  document.addEventListener('DOMContentLoaded', function () {
+    const usedTrial = localStorage.getItem('usedTrial');
+
+    if (usedTrial === 'true') {
+      // Already used: redirect or block interaction
+      alert("You've already used your free trial. Redirecting to pricing...");
+      window.location.href = "/pricing"; // change to your actual pricing page URL
+    }
+  });
+
+  // Store flag after they generate deadlines
+  function calculateDeadlines() {
+    const trial_date = document.getElementById('trial_date').value;
+    const client_name = document.getElementById('client_name').value;
+
+    if (!trial_date || !client_name) {
+      alert('Please enter the trial date and client name.');
+      return;
+    }
+
+    // Flag that user has now used the trial
+    localStorage.setItem('usedTrial', 'true');
+
+    document.getElementById('hidden_client_name').value = client_name;
+    document.getElementById('hidden_trial_date').value = trial_date;
+    document.getElementById('csv_client_name').value = client_name;
+
+    fetch('/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'trial_date=' + encodeURIComponent(trial_date)
+    })
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.querySelector('#deadlineTable tbody');
+        tbody.innerHTML = '';
+
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          const eventCell = document.createElement('td');
+          const dateCell = document.createElement('td');
+
+          eventCell.textContent = item.event;
+
+          const dateInput = document.createElement('input');
+          dateInput.type = 'date';
+          dateInput.name = 'date';
+          dateInput.value = item.date;
+
+          const eventInput = document.createElement('input');
+          eventInput.type = 'hidden';
+          eventInput.name = 'event';
+          eventInput.value = item.event;
+
+          dateCell.appendChild(dateInput);
+          dateCell.appendChild(eventInput);
+
+          row.appendChild(eventCell);
+          row.appendChild(dateCell);
+          tbody.appendChild(row);
+        });
+
+        document.getElementById('trialSection').style.display = 'block';
+      });
+  }
+</script>
 
 
 </body>
