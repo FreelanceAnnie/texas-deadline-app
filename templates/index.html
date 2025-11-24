@@ -154,7 +154,47 @@
         <th>Deadline</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody><tbody>
+  {# 1) “Normal” deadlines that are auto-calculated #}
+  {% for event, days in deadlines.items() %}
+    <tr class="auto-row">
+      <td>
+        <!-- Event is fixed text but still submitted -->
+        <input type="text"
+               name="event"
+               class="form-control"
+               value="{{ event }}"
+               readonly>
+      </td>
+      <td>
+        <!-- JS will fill this based on trial date & your /calculate route -->
+        <input type="date"
+               name="date"
+               class="form-control auto-date"
+               required>
+      </td>
+    </tr>
+</tbody>   
+  {% endfor %}
+
+  {# 2) Five extra user-defined rows (fully editable & fillable) #}
+  {% for i in range(num_custom_deadlines) %}
+    <tr class="custom-row">
+      <td>
+        <input type="text"
+               name="event"
+               class="form-control"
+               placeholder="Custom deadline (e.g., Final Pretrial Conference)">
+      </td>
+      <td>
+        <input type="date"
+               name="date"
+               class="form-control"
+               placeholder="YYYY-MM-DD">
+      </td>
+    </tr>
+  {% endfor %}
+</tbody>
   </table>
 </div>
 
