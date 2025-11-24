@@ -356,10 +356,15 @@ function downloadWordDoc() {
   `;
 
   const rows = table.querySelectorAll("tbody tr");
+    const rows = table.querySelectorAll("tbody tr");
   rows.forEach(row => {
-    const event = row.cells[0].textContent.trim();
+    // Prefer the event input if it exists (covers your custom rows)
+    const eventInput = row.querySelector('input[name="event"]');
+    const event = eventInput ? eventInput.value : row.cells[0].textContent.trim();
+
     const dateInput = row.cells[1].querySelector("input");
     const date = dateInput ? dateInput.value : row.cells[1].textContent.trim();
+
     html += `<tr><td>${event}</td><td>${date}</td></tr>`;
   });
 
