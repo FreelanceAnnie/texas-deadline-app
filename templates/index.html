@@ -231,18 +231,22 @@ function calculateDeadlines() {
       const csvForm = document.getElementById('csvForm');
       csvForm.innerHTML = `<input type="hidden" name="client_name" value="${client_name}">`;
 
+      // 1) Auto-calculated rows from the backend
       data.forEach(item => {
         const row = document.createElement('tr');
         const eventCell = document.createElement('td');
         const dateCell = document.createElement('td');
 
+        // show the event text in the table
         eventCell.textContent = item.event;
 
+        // editable date input
         const dateInput = document.createElement('input');
         dateInput.type = 'date';
         dateInput.name = 'date';
         dateInput.value = item.date;
 
+        // hidden event input so CSV/ICS/Word can read it
         const eventInput = document.createElement('input');
         eventInput.type = 'hidden';
         eventInput.name = 'event';
@@ -255,6 +259,29 @@ function calculateDeadlines() {
         row.appendChild(dateCell);
         tbody.appendChild(row);
       });
+
+      // 2) Five extra blank, user-fillable rows
+      const extraRows = 5;
+      for (let i = 0; i < extraRows; i++) {
+        const row = document.createElement('tr');
+
+        const eventCell = document.createElement('td');
+        const eventInput = document.createElement('input');
+        eventInput.type = 'text';
+        eventInput.name = 'event';
+        eventInput.placeholder = 'Custom deadline (e.g., Final Pretrial Conference)';
+        eventCell.appendChild(eventInput);
+
+        const dateCell = document.createElement('td');
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.name = 'date';
+        dateCell.appendChild(dateInput);
+
+        row.appendChild(eventCell);
+        row.appendChild(dateCell);
+        tbody.appendChild(row);
+      }
 
       document.getElementById('trialSection').style.display = 'block';
     });
