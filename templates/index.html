@@ -469,6 +469,30 @@ function downloadCSV() {
 }
 </script>
 
+<script>
+// When the trial date changes, auto-fill ONLY the auto-date fields.
+document.getElementById('trial_date').addEventListener('change', function () {
+    const trialDate = this.value;
+    if (!trialDate) return;
+
+    fetch('/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'trial_date=' + encodeURIComponent(trialDate)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const autoDateInputs = document.querySelectorAll('input.auto-date');
+
+        data.forEach((item, index) => {
+            if (autoDateInputs[index]) {
+                autoDateInputs[index].value = item.date;
+            }
+        });
+        // Custom rows remain untouched (no auto-date class)
+    });
+});
+</script>
 
 </body>
 </html>
