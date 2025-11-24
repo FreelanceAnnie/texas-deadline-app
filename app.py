@@ -26,7 +26,11 @@ default_deadlines = {
 
 @app.route('/')
 def index():
-    return render_template('index.html', deadlines=default_deadlines)
+    # number of user-defined deadlines you want to allow
+    num_custom_deadlines = 5
+    return render_template('index.html',
+                           deadlines=default_deadlines,
+                           num_custom_deadlines=num_custom_deadlines)
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
@@ -135,4 +139,5 @@ def download_csv():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
